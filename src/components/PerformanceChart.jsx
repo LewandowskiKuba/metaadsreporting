@@ -18,7 +18,7 @@ export function PerformanceChart({ data = [] }) {
           <YAxis yAxisId="left" stroke="rgba(0,0,0,0.6)" tick={{ fill: 'rgba(0,0,0,0.6)' }} />
           <YAxis yAxisId="right" orientation="right" stroke="rgba(0,0,0,0.6)" tick={{ fill: 'rgba(0,0,0,0.6)' }} />
           <Tooltip contentStyle={{ backgroundColor: '#ffffff', border: '1px solid rgba(0,0,0,0.1)', borderRadius: '8px' }} />
-          <Legend wrapperStyle={{ color: 'rgba(0,0,0,0.8)' }} />
+          <Legend wrapperStyle={{ color: 'rgba(0,0,0,0.8)', paddingTop: '24px' }} />
           <Line yAxisId="left" type="monotone" dataKey="wydatki" stroke="#ab1dfe" strokeWidth={2} dot={false} name="Wydatki (PLN)" />
           <Line yAxisId="right" type="monotone" dataKey="wyswietlenia" stroke="#34e2e4" strokeWidth={2} dot={false} name="Wyświetlenia" />
           <Line yAxisId="right" type="monotone" dataKey="klikniecia" stroke="#4721fb" strokeWidth={2} dot={false} name="Kliknięcia" />
