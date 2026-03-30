@@ -53,12 +53,10 @@ export function AdCards({ accountId, dateRange, currency = 'PLN' }) {
                 </div>
               )}
               {isVideo && (
-                <div className="absolute inset-0 flex items-center justify-center bg-black/20 pointer-events-none">
-                  <div className="w-12 h-12 rounded-full bg-white/90 flex items-center justify-center shadow-lg">
-                    <svg viewBox="0 0 24 24" fill="#4721fb" className="w-5 h-5 ml-0.5">
-                      <path d="M8 5v14l11-7z"/>
-                    </svg>
-                  </div>
+                <div className="absolute bottom-2 left-2 pointer-events-none">
+                  <span className="text-xs font-semibold text-white bg-black/50 rounded px-1.5 py-0.5 backdrop-blur-sm">
+                    vid.
+                  </span>
                 </div>
               )}
             </div>
