@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { getAds } from '../api/meta.js';
 
+const EXCLUDED_PAGE_IDS = ['217248824815577'];
+
 function fmt(n) { return Number(n || 0).toLocaleString('pl-PL'); }
 
 export function AdCards({ accountId, dateRange, currency = 'PLN' }) {
@@ -11,7 +13,14 @@ export function AdCards({ accountId, dateRange, currency = 'PLN' }) {
     if (!accountId || !dateRange) return;
     setLoading(true);
     getAds(accountId, dateRange)
-      .then(res => setAds(res.data || []))
+      .then(res => {
+        const all = res.data || [];
+        const filtered = all.filter(ad => {
+          const actorId = ad.creative?.actor_id;
+          return !actorId || !EXCLUDED_PAGE_IDS.includes(actorId);
+        });
+        setAds(filtered);
+      })
       .catch(console.error)
       .finally(() => setLoading(false));
   }, [accountId, dateRange]);
