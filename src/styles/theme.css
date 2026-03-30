@@ -1,0 +1,9 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+
+* { font-family: 'Poppins', -apple-system, BlinkMacSystemFont, sans-serif; }
+
+body { @apply bg-white text-gray-900; }
+
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { @apply bg-gray-100 rounded; }
+::-webkit-scrollbar-thumb { @apply bg-gray-300 rounded; }
