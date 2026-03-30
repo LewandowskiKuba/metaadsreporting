@@ -41,7 +41,7 @@ export function FractalBackground() {
 
         ctx.beginPath();
         ctx.arc(rp.x, rp.y, rp.r, 0, Math.PI * 2);
-        ctx.strokeStyle = `rgba(139, 92, 246, ${rp.alpha})`;
+        ctx.strokeStyle = `rgba(174, 34, 138, ${rp.alpha})`;
         ctx.lineWidth = 1.2;
         ctx.stroke();
 
@@ -51,7 +51,7 @@ export function FractalBackground() {
           const a2 = 0.18 * (1 - r2 / rp.maxR);
           ctx.beginPath();
           ctx.arc(rp.x, rp.y, r2, 0, Math.PI * 2);
-          ctx.strokeStyle = `rgba(139, 92, 246, ${a2})`;
+          ctx.strokeStyle = `rgba(174, 34, 138, ${a2})`;
           ctx.lineWidth = 0.8;
           ctx.stroke();
         }
