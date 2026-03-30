@@ -1,7 +1,7 @@
 // All requests go through the local proxy (server.js).
 // Token lives in .env on the server. Auth JWT sent from localStorage.
 
-const PROXY = 'http://localhost:3001/api/meta';
+const PROXY = (import.meta.env.VITE_API_URL ?? '') + '/api/meta';
 
 function authHeaders() {
   const token = localStorage.getItem('auth_token');
