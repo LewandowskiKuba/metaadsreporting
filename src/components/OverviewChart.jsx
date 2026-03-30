@@ -15,7 +15,7 @@ const METRICS = [
 
 function processData(rawData) {
   return (rawData || []).map(d => ({
-    date: formatDateShort(d.date_start),
+    date: formatDateShort(d.date || d.date_start),
     impressions: parseFloat(d.impressions || 0),
     reach:       parseFloat(d.reach || 0),
     clicks:      parseFloat(d.clicks || 0),

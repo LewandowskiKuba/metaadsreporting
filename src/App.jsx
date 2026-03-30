@@ -4,17 +4,44 @@ import MetricsGrid from './components/MetricsGrid.jsx';
 import OverviewChart from './components/OverviewChart.jsx';
 import BreakdownSection from './components/BreakdownSection.jsx';
 import AdsSection from './components/AdsSection.jsx';
-import { getAdAccounts, getInsights, getInsightsTimeSeries } from './api/meta.js';
+import { getDbAccounts, getDbAggregate, getDbMetrics } from './api/local.js';
 
 function defaultDateRange() {
   const today = new Date();
   const pad = n => String(n).padStart(2, '0');
-  const fmt = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
-  const from = new Date(today);
-  from.setDate(today.getDate() - 7);
-  const to = new Date(today);
-  to.setDate(today.getDate() - 1);
+  const fmt = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  const from = new Date(today); from.setDate(today.getDate() - 30);
+  const to   = new Date(today); to.setDate(today.getDate() - 1);
   return { since: fmt(from), until: fmt(to) };
+}
+
+// Convert DB aggregate row to the shape MetricsGrid expects (same as Meta API insight)
+function dbAggToInsight(agg) {
+  if (!agg) return null;
+  return {
+    spend:          String(agg.spend ?? 0),
+    impressions:    String(agg.impressions ?? 0),
+    reach:          String(agg.reach ?? 0),
+    cpm:            String(agg.cpm ?? 0),
+    cpc:            String(agg.cpc ?? 0),
+    ctr:            String(agg.ctr ?? 0),
+    unique_clicks:  String(agg.unique_clicks ?? 0),
+    outbound_clicks: agg.outbound_clicks > 0
+      ? [{ action_type: 'outbound_click', value: String(agg.outbound_clicks) }]
+      : [],
+    actions: [
+      ...(agg.leads > 0  ? [{ action_type: 'lead', value: String(agg.leads) }] : []),
+      ...(agg.calls > 0  ? [{ action_type: 'click_to_call_call_confirm', value: String(agg.calls) }] : []),
+    ],
+    action_values: agg.purchase_value > 0
+      ? [{ action_type: 'purchase', value: String(agg.purchase_value) }]
+      : [],
+    // pre-computed derived
+    _cpl:          agg.cpl,
+    _cvr:          agg.cvr,
+    _cost_per_call: agg.cost_per_call,
+    _roas:         agg.roas,
+  };
 }
 
 export default function App() {
@@ -28,18 +55,18 @@ export default function App() {
   const [error, setError]           = useState(null);
   const [accountsError, setAccountsError] = useState(null);
 
-  // Load ad accounts on mount
+  // Load accounts from DB
   useEffect(() => {
-    getAdAccounts()
+    getDbAccounts()
       .then(res => {
-        const active = (res.data || []).filter(a => a.account_status === 1);
-        setAccounts(active);
-        if (active.length > 0) setSelectedAccount(active[0]);
+        const accs = res.data || [];
+        setAccounts(accs);
+        if (accs.length > 0) setSelectedAccount(accs[0]);
       })
       .catch(err => setAccountsError(err.message));
   }, []);
 
-  // Load insights whenever account or date range changes
+  // Load metrics from DB when account or date range changes
   useEffect(() => {
     if (!selectedAccount) return;
     setLoading(true);
@@ -48,11 +75,11 @@ export default function App() {
     setTimeSeries([]);
 
     Promise.all([
-      getInsights(selectedAccount.id, dateRange),
-      getInsightsTimeSeries(selectedAccount.id, dateRange),
+      getDbAggregate(selectedAccount.id, dateRange),
+      getDbMetrics(selectedAccount.id, dateRange),
     ])
-      .then(([insRes, tsRes]) => {
-        setInsights(insRes.data?.[0] || null);
+      .then(([aggRes, tsRes]) => {
+        setInsights(dbAggToInsight(aggRes.data));
         setTimeSeries(tsRes.data || []);
       })
       .catch(err => setError(err.message))
@@ -75,11 +102,11 @@ export default function App() {
 
         {accountsError && (
           <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm flex items-start gap-2">
-            <span className="mt-0.5 flex-shrink-0">⚠️</span>
+            <span className="flex-shrink-0 mt-0.5">⚠️</span>
             <div>
               <strong>Błąd ładowania kont:</strong> {accountsError}
               <p className="text-xs mt-1 text-red-500">
-                Sprawdź <code>META_ACCESS_TOKEN</code> w pliku <code>.env</code> i uruchom ponownie serwer.
+                Sprawdź <code>META_ACCESS_TOKEN</code> w <code>.env</code> i uruchom ponownie serwer.
               </p>
             </div>
           </div>
@@ -94,7 +121,8 @@ export default function App() {
         {!accountsError && accounts.length === 0 && (
           <div className="text-center py-20 text-gray-400">
             <div className="w-8 h-8 border-2 border-blue-400 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-            <p>Ładowanie kont reklamowych...</p>
+            <p className="text-sm">Ładowanie kont i synchronizacja danych…</p>
+            <p className="text-xs mt-1 text-gray-300">Pierwsze uruchomienie pobiera 90 dni historii</p>
           </div>
         )}
 
@@ -106,7 +134,7 @@ export default function App() {
                 {loading && (
                   <div className="flex items-center gap-2 text-sm text-gray-400">
                     <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
-                    Aktualizacja...
+                    Ładowanie…
                   </div>
                 )}
               </div>

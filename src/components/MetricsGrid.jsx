@@ -26,17 +26,18 @@ export default function MetricsGrid({ insights, currency = 'PLN' }) {
     actions, action_values, outbound_clicks, unique_clicks,
   } = insights;
 
-  const leads = getTotalLeads(actions);
-  const calls = getCallCount(actions);
+  const leads = insights._leads ?? getTotalLeads(actions);
+  const calls = insights._calls ?? getCallCount(actions);
   const outbound = getOutboundClicks(outbound_clicks);
   const clicks = parseFloat(unique_clicks || 0);
   const spendF = parseFloat(spend || 0);
 
-  const cpl = leads > 0 && spendF > 0 ? spendF / leads : null;
-  const cvr = clicks > 0 && leads > 0 ? (leads / clicks) * 100 : null;
-  const costPerCall = calls > 0 && spendF > 0 ? spendF / calls : null;
+  // Use pre-computed values from DB aggregate if available, otherwise derive
+  const cpl          = insights._cpl          ?? (leads > 0 && spendF > 0 ? spendF / leads : null);
+  const cvr          = insights._cvr          ?? (clicks > 0 && leads > 0 ? (leads / clicks) * 100 : null);
+  const costPerCall  = insights._cost_per_call ?? (calls > 0 && spendF > 0 ? spendF / calls : null);
   const purchaseValue = getActionValue(action_values, 'purchase');
-  const roas = purchaseValue > 0 && spendF > 0 ? purchaseValue / spendF : null;
+  const roas         = insights._roas         ?? (purchaseValue > 0 && spendF > 0 ? purchaseValue / spendF : null);
 
   const groups = [
     {
