@@ -63,8 +63,10 @@ export function DashboardPage() {
     { name: 'CPC', value: fmtNum(agg.cpc, 2), unit: currency },
     { name: 'CTR', value: fmtNum(agg.ctr, 2), unit: '%' },
     ...(agg.leads > 0 ? [{ name: 'Leady', value: fmtNum(agg.leads), unit: '' }] : []),
-    ...(agg.cpl > 0 ? [{ name: 'CPL', value: fmtNum(agg.cpl, 2), unit: currency }] : []),
     ...(agg.calls > 0 ? [{ name: 'Połączenia', value: fmtNum(agg.calls), unit: '' }] : []),
+    ...(agg.cpl > 0 ? [{ name: 'Koszt konwersji (lead)', value: fmtNum(agg.cpl, 2), unit: currency }] : []),
+    ...(agg.cost_per_call > 0 ? [{ name: 'Koszt konwersji (połączenie)', value: fmtNum(agg.cost_per_call, 2), unit: currency }] : []),
+    ...(!agg.cpl && !agg.cost_per_call && agg.spend > 0 ? [] : []),
     ...(agg.roas > 0 ? [{ name: 'ROAS', value: fmtNum(agg.roas, 2), unit: 'x' }] : []),
   ] : [];
 
