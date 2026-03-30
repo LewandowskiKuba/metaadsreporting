@@ -37,7 +37,7 @@ export function AdCards({ accountId, dateRange, currency = 'PLN' }) {
         const impressions = parseInt(insights?.impressions || 0);
         const ctr = parseFloat(insights?.ctr || 0);
         const preview = ad.creative?.image_url || ad.creative?.thumbnail_url;
-        const isVideo = !!ad.creative?.video_id || !!ad.creative?.thumbnail_url;
+        const isVideo = !!ad.creative?.video_id;
 
         return (
           <div key={ad.id} className="bg-white rounded-[12px] overflow-hidden shadow-sm hover:shadow-lg transition-shadow">
