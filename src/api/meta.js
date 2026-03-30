@@ -41,6 +41,29 @@ export async function getAds(accountId, { since, until }) {
   });
 }
 
+export async function getVideoAds(accountId, { since, until }) {
+  const videoFields = [
+    'video_play_actions',
+    'video_avg_time_watched_actions',
+    'video_p25_watched_actions',
+    'video_p50_watched_actions',
+    'video_p75_watched_actions',
+    'video_p95_watched_actions',
+    'video_p100_watched_actions',
+    'video_thruplay_watched_actions',
+    'impressions',
+    'spend',
+  ].join(',');
+  const timeRange = JSON.stringify({ since, until });
+  return apiFetch(`/${accountId}/ads`, {
+    fields: `name,status,creative{id,name,thumbnail_url,video_id},insights.time_range(${timeRange}){${videoFields}}`,
+    limit: '100',
+    filtering: JSON.stringify([
+      { field: 'effective_status', operator: 'IN', value: ['ACTIVE', 'PAUSED'] },
+    ]),
+  });
+}
+
 export async function getVideoSource(videoId) {
   return apiFetch(`/${videoId}`, { fields: 'source,thumbnails' });
 }

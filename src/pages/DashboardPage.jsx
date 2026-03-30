@@ -4,6 +4,7 @@ import { MetricCard } from '../components/MetricCard.jsx';
 import { PerformanceChart } from '../components/PerformanceChart.jsx';
 import { TargetingAnalysis } from '../components/TargetingAnalysis.jsx';
 import { AdCards } from '../components/AdCards.jsx';
+import { VideoCards } from '../components/VideoCards.jsx';
 import { getDbAccounts, getDbAggregate, getDbMetrics } from '../api/local.js';
 
 function defaultDateRange() {
@@ -121,6 +122,13 @@ export function DashboardPage() {
             <section>
               <h2 className="text-2xl font-semibold text-gray-900 mb-6">Reklamy</h2>
               <AdCards accountId={selectedAccount.id} dateRange={dateRange} currency={currency} />
+            </section>
+
+            <hr className="border-gray-200 mb-12 mt-12" />
+
+            <section>
+              <h2 className="text-2xl font-semibold text-gray-900 mb-6">Analiza video</h2>
+              <VideoCards accountId={selectedAccount.id} dateRange={dateRange} />
             </section>
           </>
         )}
