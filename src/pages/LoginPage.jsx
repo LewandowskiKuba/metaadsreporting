@@ -28,11 +28,10 @@ export function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#0a0a0f] relative overflow-hidden">
-      <div
-        className="absolute inset-0 opacity-30"
-        style={{ background: 'linear-gradient(135deg, #020381 0%, #2874fc 100%)' }}
-      />
+    <div
+      className="min-h-screen flex items-center justify-center relative overflow-hidden"
+      style={{ background: 'linear-gradient(135deg, #ae228a 0%, #6b1fa8 40%, #1a0a6e 75%, #0d0a5c 100%)' }}
+    >
       <FractalBackground />
       <div className="relative z-20 w-full max-w-md px-6">
         <div className="bg-white/95 backdrop-blur-sm rounded-[12px] shadow-lg p-12">
