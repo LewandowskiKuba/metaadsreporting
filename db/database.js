@@ -33,6 +33,22 @@ db.exec(`
     purchase_value  REAL    DEFAULT 0,
     PRIMARY KEY (account_id, date)
   );
+
+  CREATE TABLE IF NOT EXISTS users (
+    id            INTEGER PRIMARY KEY AUTOINCREMENT,
+    email         TEXT    NOT NULL UNIQUE,
+    name          TEXT    NOT NULL,
+    password_hash TEXT    NOT NULL,
+    role          TEXT    NOT NULL DEFAULT 'viewer',
+    active        INTEGER NOT NULL DEFAULT 1,
+    created_at    TEXT    DEFAULT CURRENT_TIMESTAMP
+  );
+
+  CREATE TABLE IF NOT EXISTS user_accounts (
+    user_id    INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    account_id TEXT    NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
+    PRIMARY KEY (user_id, account_id)
+  );
 `);
 
 export default db;

@@ -1,45 +1,22 @@
 // All requests go through the local proxy (server.js).
-// The Meta token lives in .env on the server — never in the browser.
+// Token lives in .env on the server. Auth JWT sent from localStorage.
 
 const PROXY = 'http://localhost:3001/api/meta';
+
+function authHeaders() {
+  const token = localStorage.getItem('auth_token');
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
 
 async function apiFetch(path, params = {}) {
   const qs = new URLSearchParams(params).toString();
   const url = `${PROXY}${path}${qs ? `?${qs}` : ''}`;
-  const res = await fetch(url);
+  const res = await fetch(url, { headers: authHeaders() });
   const json = await res.json();
   if (!res.ok) {
     throw new Error(json?.error?.message || `HTTP ${res.status}`);
   }
   return json;
-}
-
-export async function getAdAccounts() {
-  return apiFetch('/me/adaccounts', {
-    fields: 'name,id,account_status,currency,amount_spent,balance,funding_source_details',
-    limit: '200',
-  });
-}
-
-export async function getInsights(accountId, { since, until }) {
-  return apiFetch(`/${accountId}/insights`, {
-    fields: [
-      'spend', 'impressions', 'reach', 'cpm', 'cpc', 'ctr',
-      'actions', 'action_values', 'outbound_clicks', 'unique_clicks',
-    ].join(','),
-    time_range: JSON.stringify({ since, until }),
-    level: 'account',
-  });
-}
-
-export async function getInsightsTimeSeries(accountId, { since, until }) {
-  return apiFetch(`/${accountId}/insights`, {
-    fields: 'spend,impressions,reach,clicks,actions',
-    time_range: JSON.stringify({ since, until }),
-    time_increment: '1',
-    level: 'account',
-    limit: '90',
-  });
 }
 
 export async function getInsightsBreakdown(accountId, { since, until }, breakdowns) {

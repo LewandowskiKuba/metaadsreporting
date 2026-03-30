@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
+import LoginPage from './components/LoginPage.jsx';
 import Header from './components/Header.jsx';
 import MetricsGrid from './components/MetricsGrid.jsx';
 import OverviewChart from './components/OverviewChart.jsx';
 import BreakdownSection from './components/BreakdownSection.jsx';
 import AdsSection from './components/AdsSection.jsx';
-import { getDbAccounts, getDbAggregate, getDbMetrics } from './api/local.js';
+import UsersPage from './pages/UsersPage.jsx';
+import { getDbAccounts, getDbAggregate, getDbMetrics, getMe } from './api/local.js';
 
 function defaultDateRange() {
   const today = new Date();
@@ -15,7 +17,6 @@ function defaultDateRange() {
   return { since: fmt(from), until: fmt(to) };
 }
 
-// Convert DB aggregate row to the shape MetricsGrid expects (same as Meta API insight)
 function dbAggToInsight(agg) {
   if (!agg) return null;
   return {
@@ -30,13 +31,12 @@ function dbAggToInsight(agg) {
       ? [{ action_type: 'outbound_click', value: String(agg.outbound_clicks) }]
       : [],
     actions: [
-      ...(agg.leads > 0  ? [{ action_type: 'lead', value: String(agg.leads) }] : []),
-      ...(agg.calls > 0  ? [{ action_type: 'click_to_call_call_confirm', value: String(agg.calls) }] : []),
+      ...(agg.leads > 0 ? [{ action_type: 'lead', value: String(agg.leads) }] : []),
+      ...(agg.calls > 0 ? [{ action_type: 'click_to_call_call_confirm', value: String(agg.calls) }] : []),
     ],
     action_values: agg.purchase_value > 0
       ? [{ action_type: 'purchase', value: String(agg.purchase_value) }]
       : [],
-    // pre-computed derived
     _cpl:          agg.cpl,
     _cvr:          agg.cvr,
     _cost_per_call: agg.cost_per_call,
@@ -45,6 +45,10 @@ function dbAggToInsight(agg) {
 }
 
 export default function App() {
+  const [user, setUser]           = useState(null);
+  const [authChecked, setAuthChecked] = useState(false);
+  const [page, setPage]           = useState('dashboard'); // 'dashboard' | 'users'
+
   const [accounts, setAccounts]               = useState([]);
   const [selectedAccount, setSelectedAccount] = useState(null);
   const [dateRange, setDateRange]             = useState(defaultDateRange);
@@ -55,8 +59,19 @@ export default function App() {
   const [error, setError]           = useState(null);
   const [accountsError, setAccountsError] = useState(null);
 
-  // Load accounts from DB
+  // Validate stored token on mount
   useEffect(() => {
+    const token = localStorage.getItem('auth_token');
+    if (!token) { setAuthChecked(true); return; }
+    getMe()
+      .then(res => setUser(res.user))
+      .catch(() => localStorage.removeItem('auth_token'))
+      .finally(() => setAuthChecked(true));
+  }, []);
+
+  // Load accounts after login
+  useEffect(() => {
+    if (!user) return;
     getDbAccounts()
       .then(res => {
         const accs = res.data || [];
@@ -64,9 +79,9 @@ export default function App() {
         if (accs.length > 0) setSelectedAccount(accs[0]);
       })
       .catch(err => setAccountsError(err.message));
-  }, []);
+  }, [user]);
 
-  // Load metrics from DB when account or date range changes
+  // Load metrics from DB
   useEffect(() => {
     if (!selectedAccount) return;
     setLoading(true);
@@ -86,88 +101,117 @@ export default function App() {
       .finally(() => setLoading(false));
   }, [selectedAccount, dateRange]);
 
+  const handleLogin = userData => setUser(userData);
+
+  const handleLogout = () => {
+    localStorage.removeItem('auth_token');
+    setUser(null);
+    setAccounts([]);
+    setSelectedAccount(null);
+    setPage('dashboard');
+  };
+
+  // Auth not yet checked
+  if (!authChecked) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (!user) return <LoginPage onLogin={handleLogin} />;
+
   const currency = selectedAccount?.currency || 'PLN';
 
   return (
     <div className="min-h-screen bg-gray-50">
       <Header
+        user={user}
         accounts={accounts}
         selectedAccount={selectedAccount}
         onSelectAccount={setSelectedAccount}
         dateRange={dateRange}
         onDateRangeChange={setDateRange}
+        page={page}
+        onNavigate={setPage}
+        onLogout={handleLogout}
       />
 
-      <main className="max-w-[1600px] mx-auto px-4 sm:px-6 py-8 space-y-10">
+      {page === 'users' ? (
+        <UsersPage />
+      ) : (
+        <main className="max-w-[1600px] mx-auto px-4 sm:px-6 py-8 space-y-10">
 
-        {accountsError && (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm flex items-start gap-2">
-            <span className="flex-shrink-0 mt-0.5">⚠️</span>
-            <div>
-              <strong>Błąd ładowania kont:</strong> {accountsError}
-              <p className="text-xs mt-1 text-red-500">
-                Sprawdź <code>META_ACCESS_TOKEN</code> w <code>.env</code> i uruchom ponownie serwer.
-              </p>
+          {accountsError && (
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm flex items-start gap-2">
+              <span className="flex-shrink-0 mt-0.5">⚠️</span>
+              <div>
+                <strong>Błąd ładowania kont:</strong> {accountsError}
+                <p className="text-xs mt-1 text-red-500">
+                  Sprawdź <code>META_ACCESS_TOKEN</code> w <code>.env</code>.
+                </p>
+              </div>
             </div>
-          </div>
-        )}
+          )}
 
-        {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
-            ⚠️ {error}
-          </div>
-        )}
+          {error && (
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+              ⚠️ {error}
+            </div>
+          )}
 
-        {!accountsError && accounts.length === 0 && (
-          <div className="text-center py-20 text-gray-400">
-            <div className="w-8 h-8 border-2 border-blue-400 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-            <p className="text-sm">Ładowanie kont i synchronizacja danych…</p>
-            <p className="text-xs mt-1 text-gray-300">Pierwsze uruchomienie pobiera 90 dni historii</p>
-          </div>
-        )}
+          {!accountsError && accounts.length === 0 && (
+            <div className="text-center py-20 text-gray-400">
+              <div className="w-8 h-8 border-2 border-blue-400 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+              <p className="text-sm">Ładowanie kont i synchronizacja danych…</p>
+              <p className="text-xs mt-1 text-gray-300">Pierwsze uruchomienie pobiera 90 dni historii</p>
+            </div>
+          )}
 
-        {selectedAccount && (
-          <>
-            <section>
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-bold text-gray-900">Dane ogólne</h2>
-                {loading && (
-                  <div className="flex items-center gap-2 text-sm text-gray-400">
-                    <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
-                    Ładowanie…
-                  </div>
-                )}
-              </div>
-              <MetricsGrid insights={insights} currency={currency} />
-              <div className="mt-5">
-                <OverviewChart data={timeSeries} />
-              </div>
-            </section>
+          {selectedAccount && (
+            <>
+              <section>
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-lg font-bold text-gray-900">Dane ogólne</h2>
+                  {loading && (
+                    <div className="flex items-center gap-2 text-sm text-gray-400">
+                      <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+                      Ładowanie…
+                    </div>
+                  )}
+                </div>
+                <MetricsGrid insights={insights} currency={currency} />
+                <div className="mt-5">
+                  <OverviewChart data={timeSeries} />
+                </div>
+              </section>
 
-            <hr className="border-gray-200" />
+              <hr className="border-gray-200" />
 
-            <section>
-              <h2 className="text-lg font-bold text-gray-900 mb-4">Analiza targetowań</h2>
-              <BreakdownSection
-                accountId={selectedAccount.id}
-                dateRange={dateRange}
-                currency={currency}
-              />
-            </section>
+              <section>
+                <h2 className="text-lg font-bold text-gray-900 mb-4">Analiza targetowań</h2>
+                <BreakdownSection
+                  accountId={selectedAccount.id}
+                  dateRange={dateRange}
+                  currency={currency}
+                />
+              </section>
 
-            <hr className="border-gray-200" />
+              <hr className="border-gray-200" />
 
-            <section>
-              <h2 className="text-lg font-bold text-gray-900 mb-4">Reklamy</h2>
-              <AdsSection
-                accountId={selectedAccount.id}
-                dateRange={dateRange}
-                currency={currency}
-              />
-            </section>
-          </>
-        )}
-      </main>
+              <section>
+                <h2 className="text-lg font-bold text-gray-900 mb-4">Reklamy</h2>
+                <AdsSection
+                  accountId={selectedAccount.id}
+                  dateRange={dateRange}
+                  currency={currency}
+                />
+              </section>
+            </>
+          )}
+        </main>
+      )}
     </div>
   );
 }
