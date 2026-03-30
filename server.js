@@ -3,6 +3,11 @@ import express from 'express';
 import axios from 'axios';
 import cors from 'cors';
 import cron from 'node-cron';
+import { fileURLToPath } from 'url';
+import path from 'path';
+import fs from 'fs';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 import db from './db/database.js';
 import { syncAll, syncYesterday } from './db/sync.js';
 import {
@@ -238,6 +243,17 @@ app.post('/api/db/sync', authMiddleware, adminOnly, async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
+// ── Static frontend (production) ──────────────────────────────────────────────
+
+const distDir = path.join(__dirname, 'dist');
+if (fs.existsSync(distDir)) {
+  app.use(express.static(distDir));
+  app.get('*', (req, res, next) => {
+    if (req.path.startsWith('/api/')) return next();
+    res.sendFile(path.join(distDir, 'index.html'));
+  });
+}
 
 // ── Cron ──────────────────────────────────────────────────────────────────────
 
