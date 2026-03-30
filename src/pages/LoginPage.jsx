@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
 import { login } from '../api/local.js';
+import { FractalBackground } from '../components/FractalBackground.jsx';
 
 export function LoginPage() {
   const navigate = useNavigate();
@@ -32,7 +33,8 @@ export function LoginPage() {
         className="absolute inset-0 opacity-30"
         style={{ background: 'linear-gradient(135deg, #020381 0%, #2874fc 100%)' }}
       />
-      <div className="relative z-10 w-full max-w-md px-6">
+      <FractalBackground />
+      <div className="relative z-20 w-full max-w-md px-6">
         <div className="bg-white/95 backdrop-blur-sm rounded-[12px] shadow-lg p-12">
           <div className="flex justify-center mb-8">
             <div
