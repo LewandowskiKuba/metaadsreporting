@@ -16,7 +16,7 @@ import {
 } from './db/auth.js';
 
 const app = express();
-const PORT = 3001;
+const PORT = process.env.PORT || 3002;
 const META_BASE = 'https://graph.facebook.com/v21.0';
 const TOKEN = process.env.META_ACCESS_TOKEN;
 
@@ -25,7 +25,7 @@ if (!TOKEN || TOKEN === 'wklej_token_tutaj') {
   process.exit(1);
 }
 
-app.use(cors({ origin: 'http://localhost:5173' }));
+app.use(cors({ origin: ['http://localhost:5173', 'http://localhost:3002'] }));
 app.use(express.json());
 
 // ── Auth ──────────────────────────────────────────────────────────────────────
