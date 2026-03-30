@@ -5,9 +5,9 @@ import { fileURLToPath } from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-export default defineConfig({
+export default defineConfig(({ command }) => ({
   plugins: [react()],
-  base: '/meta/',
+  base: command === 'build' ? '/meta/' : '/',
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
@@ -15,8 +15,9 @@ export default defineConfig({
   },
   server: {
     port: 5173,
+    allowedHosts: 'all',
     proxy: {
       '/api': 'http://localhost:3002',
     },
   },
-});
+}));

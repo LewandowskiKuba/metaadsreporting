@@ -2,9 +2,9 @@
   "version": "0.0.1",
   "configurations": [
     {
-      "name": "frontend",
-      "runtimeExecutable": "node",
-      "runtimeArgs": ["/Users/kubalewandowski/.nvm/versions/node/v22.22.0/lib/node_modules/npm/bin/npm-cli.js", "--prefix", "/Users/kubalewandowski/Projects/meta-dashboard", "run", "dev"],
+      "name": "meta-dashboard",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["vite", "--host"],
       "port": 5173
     }
   ]

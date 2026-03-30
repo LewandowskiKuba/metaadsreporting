@@ -8,7 +8,7 @@ const router = createBrowserRouter([
   { path: '/', element: <LoginPage /> },
   { path: '/dashboard', element: <ProtectedRoute><DashboardPage /></ProtectedRoute> },
   { path: '/users', element: <ProtectedRoute adminOnly><UsersPage /></ProtectedRoute> },
-], { basename: '/meta' });
+], { basename: import.meta.env.PROD ? '/meta' : '/' });
 
 export default function App() {
   return <RouterProvider router={router} />;
