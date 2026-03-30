@@ -1,18 +1,5 @@
 import { useEffect, useRef } from 'react';
 
-function drawFractalTree(ctx, x, y, angle, depth, length) {
-  if (depth === 0) return;
-  const x2 = x + Math.cos(angle) * length;
-  const y2 = y + Math.sin(angle) * length;
-  ctx.beginPath();
-  ctx.moveTo(x, y);
-  ctx.lineTo(x2, y2);
-  ctx.lineWidth = depth * 0.4;
-  ctx.stroke();
-  drawFractalTree(ctx, x2, y2, angle - 0.45, depth - 1, length * 0.72);
-  drawFractalTree(ctx, x2, y2, angle + 0.45, depth - 1, length * 0.72);
-}
-
 export function FractalBackground() {
   const canvasRef = useRef(null);
 
@@ -21,34 +8,73 @@ export function FractalBackground() {
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
 
-    const resize = () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-      render();
-    };
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
 
-    const render = () => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    const ripples = [];
 
-      const trees = [
-        { x: canvas.width * 0.12, y: canvas.height * 0.95, angle: -Math.PI / 2, depth: 9, length: 80 },
-        { x: canvas.width * 0.88, y: canvas.height * 0.85, angle: -Math.PI / 2 + 0.3, depth: 8, length: 65 },
-        { x: canvas.width * 0.5,  y: canvas.height * 1.02, angle: -Math.PI / 2, depth: 7, length: 55 },
-        { x: canvas.width * 0.25, y: canvas.height * 0.3,  angle: Math.PI / 4,  depth: 7, length: 40 },
-        { x: canvas.width * 0.78, y: canvas.height * 0.15, angle: Math.PI / 2 + 0.5, depth: 6, length: 35 },
-      ];
-
-      ctx.strokeStyle = '#7c3aed';
-      ctx.globalAlpha = 0.25;
-
-      trees.forEach(t => {
-        drawFractalTree(ctx, t.x, t.y, t.angle, t.depth, t.length);
+    const spawnRipple = () => {
+      ripples.push({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        r: 0,
+        maxR: 80 + Math.random() * 120,
+        speed: 0.5 + Math.random() * 0.8,
+        alpha: 0.25,
       });
     };
 
-    resize();
-    window.addEventListener('resize', resize);
-    return () => window.removeEventListener('resize', resize);
+    // spawn initial ripples spread out in time
+    for (let i = 0; i < 6; i++) {
+      setTimeout(spawnRipple, i * 800);
+    }
+    const spawnInterval = setInterval(spawnRipple, 1200);
+
+    let raf;
+    const draw = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      for (let i = ripples.length - 1; i >= 0; i--) {
+        const rp = ripples[i];
+        rp.r += rp.speed;
+        rp.alpha = 0.25 * (1 - rp.r / rp.maxR);
+
+        ctx.beginPath();
+        ctx.arc(rp.x, rp.y, rp.r, 0, Math.PI * 2);
+        ctx.strokeStyle = `rgba(139, 92, 246, ${rp.alpha})`;
+        ctx.lineWidth = 1.2;
+        ctx.stroke();
+
+        // second inner ring slightly behind
+        if (rp.r > 18) {
+          const r2 = rp.r - 18;
+          const a2 = 0.18 * (1 - r2 / rp.maxR);
+          ctx.beginPath();
+          ctx.arc(rp.x, rp.y, r2, 0, Math.PI * 2);
+          ctx.strokeStyle = `rgba(139, 92, 246, ${a2})`;
+          ctx.lineWidth = 0.8;
+          ctx.stroke();
+        }
+
+        if (rp.r >= rp.maxR) ripples.splice(i, 1);
+      }
+
+      raf = requestAnimationFrame(draw);
+    };
+
+    draw();
+
+    const onResize = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    };
+    window.addEventListener('resize', onResize);
+
+    return () => {
+      cancelAnimationFrame(raf);
+      clearInterval(spawnInterval);
+      window.removeEventListener('resize', onResize);
+    };
   }, []);
 
   return (
