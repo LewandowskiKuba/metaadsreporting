@@ -37,7 +37,7 @@ export function FractalBackground() {
       for (let i = ripples.length - 1; i >= 0; i--) {
         const rp = ripples[i];
         rp.r += rp.speed;
-        rp.alpha = 0.25 * (1 - rp.r / rp.maxR);
+        rp.alpha = 0.6 * (1 - rp.r / rp.maxR);
 
         ctx.beginPath();
         ctx.arc(rp.x, rp.y, rp.r, 0, Math.PI * 2);
@@ -48,7 +48,7 @@ export function FractalBackground() {
         // second inner ring slightly behind
         if (rp.r > 18) {
           const r2 = rp.r - 18;
-          const a2 = 0.18 * (1 - r2 / rp.maxR);
+          const a2 = 0.4 * (1 - r2 / rp.maxR);
           ctx.beginPath();
           ctx.arc(rp.x, rp.y, r2, 0, Math.PI * 2);
           ctx.strokeStyle = `rgba(174, 34, 138, ${a2})`;
