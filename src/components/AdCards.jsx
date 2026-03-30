@@ -23,23 +23,33 @@ export function AdCards({ accountId, dateRange, currency = 'PLN' }) {
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
       {ads.map(ad => {
         const insights = ad.insights?.data?.[0];
-        const imageUrl = ad.creative?.image_url;
         const isActive = ad.status === 'ACTIVE';
         const spend = parseFloat(insights?.spend || 0);
         const impressions = parseInt(insights?.impressions || 0);
         const ctr = parseFloat(insights?.ctr || 0);
+        const preview = ad.creative?.image_url || ad.creative?.thumbnail_url;
+        const isVideo = !!ad.creative?.video_id;
 
         return (
           <div key={ad.id} className="bg-white rounded-[12px] overflow-hidden shadow-sm hover:shadow-lg transition-shadow">
             <div className="relative h-48 overflow-hidden bg-gray-100">
-              {imageUrl ? (
-                <img src={imageUrl} alt={ad.name} className="w-full h-full object-cover" />
+              {preview ? (
+                <img src={preview} alt="kreacja" className="w-full h-full object-cover" />
               ) : (
                 <div
                   className="w-full h-full flex items-center justify-center text-white/60 text-sm"
                   style={{ background: 'linear-gradient(135deg, #34e2e4 0%, #4721fb 50%, #ab1dfe 100%)' }}
                 >
                   Brak podglądu
+                </div>
+              )}
+              {isVideo && (
+                <div className="absolute inset-0 flex items-center justify-center bg-black/20 pointer-events-none">
+                  <div className="w-12 h-12 rounded-full bg-white/90 flex items-center justify-center shadow-lg">
+                    <svg viewBox="0 0 24 24" fill="#4721fb" className="w-5 h-5 ml-0.5">
+                      <path d="M8 5v14l11-7z"/>
+                    </svg>
+                  </div>
                 </div>
               )}
             </div>

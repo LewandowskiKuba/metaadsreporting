@@ -33,10 +33,14 @@ export async function getAds(accountId, { since, until }) {
   const insightFields = 'impressions,reach,clicks,spend,cpm,cpc,ctr,actions,action_values,outbound_clicks';
   const timeRange = JSON.stringify({ since, until });
   return apiFetch(`/${accountId}/ads`, {
-    fields: `name,status,creative{id,name,image_url,body,title,call_to_action_type},insights.time_range(${timeRange}){${insightFields}}`,
+    fields: `name,status,creative{id,name,image_url,thumbnail_url,video_id,body,title,call_to_action_type},insights.time_range(${timeRange}){${insightFields}}`,
     limit: '50',
     filtering: JSON.stringify([{ field: 'effective_status', operator: 'IN', value: ['ACTIVE', 'PAUSED', 'ARCHIVED'] }]),
   });
+}
+
+export async function getVideoSource(videoId) {
+  return apiFetch(`/${videoId}`, { fields: 'source,thumbnails' });
 }
 
 export async function getAdPreview(adId) {
