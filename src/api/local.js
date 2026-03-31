@@ -72,6 +72,56 @@ export function triggerSync() {
   return post('/api/db/sync', {});
 }
 
+// ── Clients ──────────────────────────────────────────────────────────────────
+
+export function getClients() {
+  return get('/api/clients');
+}
+
+export function createClient(data) {
+  return post('/api/clients', data);
+}
+
+export function updateClient(id, data) {
+  return put(`/api/clients/${id}`, data);
+}
+
+export function deleteClient(id) {
+  return del(`/api/clients/${id}`);
+}
+
+// ── Platform connections ──────────────────────────────────────────────────────
+
+export function getConnections() {
+  return get('/api/auth/connections');
+}
+
+export function getGoogleAdsOAuthUrl() {
+  return get('/api/auth/google-ads/url');
+}
+
+export function disconnectGoogleAds() {
+  return del('/api/auth/google-ads');
+}
+
+// ── Google Ads ────────────────────────────────────────────────────────────────
+
+export function getGadsAccounts() {
+  return get('/api/gads/accounts');
+}
+
+export function getGadsMetrics(accountId, { since, until }) {
+  return get(`/api/gads/metrics/${accountId}?since=${since}&until=${until}`);
+}
+
+export function getGadsAggregate(accountId, { since, until }) {
+  return get(`/api/gads/aggregate/${accountId}?since=${since}&until=${until}`);
+}
+
+export function triggerGadsSync() {
+  return post('/api/gads/sync', {});
+}
+
 // ── Users ─────────────────────────────────────────────────────────────────────
 
 export function getUsers() {

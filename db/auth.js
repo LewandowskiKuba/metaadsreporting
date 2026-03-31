@@ -51,12 +51,23 @@ export function adminOnly(req, res, next) {
   next();
 }
 
-// Check that req.user can access a given accountId
+// Check that req.user can access a given Meta accountId
 export function checkAccountAccess(req, res, next) {
   if (req.user.role === 'admin') return next();
   const { accountId } = req.params;
   const row = db.prepare(
     'SELECT 1 FROM user_accounts WHERE user_id = ? AND account_id = ?'
+  ).get(req.user.userId, accountId);
+  if (!row) return res.status(403).json({ error: 'Access denied' });
+  next();
+}
+
+// Check that req.user can access a given Google Ads accountId
+export function checkGoogleAccountAccess(req, res, next) {
+  if (req.user.role === 'admin') return next();
+  const { accountId } = req.params;
+  const row = db.prepare(
+    'SELECT 1 FROM user_google_accounts WHERE user_id = ? AND account_id = ?'
   ).get(req.user.userId, accountId);
   if (!row) return res.status(403).json({ error: 'Access denied' });
   next();

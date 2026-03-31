@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router';
-import { Calendar, RefreshCw, ChevronDown, LogOut } from 'lucide-react';
+import { Calendar, RefreshCw, LogOut, ChevronDown, Users, Building2, Link2 } from 'lucide-react';
 import DateRangeModal from './DateRangeModal.jsx';
-import { triggerSync } from '../api/local.js';
+import { triggerSync, getGoogleAdsOAuthUrl } from '../api/local.js';
 
 function fmtDisplay(iso) {
   const [y, m, d] = iso.split('-');
@@ -10,13 +10,29 @@ function fmtDisplay(iso) {
 }
 
 export function Navigation({ accounts, selectedAccount, onSelectAccount, dateRange, onDateRangeChange, onSync }) {
-  const navigate = useNavigate();
-  const location = useLocation();
-  const userName = localStorage.getItem('userName') || 'User';
-  const userRole = localStorage.getItem('userRole') || 'Viewer';
-  const isAdmin = userRole === 'Admin';
-  const [modalOpen, setModalOpen] = useState(false);
-  const [syncing, setSyncing] = useState(false);
+  const navigate  = useNavigate();
+  const location  = useLocation();
+  const userName  = localStorage.getItem('userName') || 'User';
+  const userRole  = localStorage.getItem('userRole') || 'Viewer';
+  const isAdmin   = userRole === 'Admin';
+
+  const [modalOpen,    setModalOpen]    = useState(false);
+  const [syncing,      setSyncing]      = useState(false);
+  const [adminOpen,    setAdminOpen]    = useState(false);
+  const [oauthLoading, setOauthLoading] = useState(false);
+
+  const adminRef = useRef(null);
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    function onClickOutside(e) {
+      if (adminRef.current && !adminRef.current.contains(e.target)) {
+        setAdminOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', onClickOutside);
+    return () => document.removeEventListener('mousedown', onClickOutside);
+  }, []);
 
   const handleLogout = () => {
     localStorage.removeItem('auth_token');
@@ -37,15 +53,48 @@ export function Navigation({ accounts, selectedAccount, onSelectAccount, dateRan
     }
   };
 
+  const handleConnectGoogle = async () => {
+    setOauthLoading(true);
+    setAdminOpen(false);
+    try {
+      const { url } = await getGoogleAdsOAuthUrl();
+      window.location.href = url;
+    } catch (err) {
+      alert(err.message);
+      setOauthLoading(false);
+    }
+  };
+
+  const adminNavItems = [
+    {
+      label: 'Zarządzanie użytkownikami',
+      icon:  <Users className="w-4 h-4" />,
+      href:  '/users',
+    },
+    {
+      label: 'Zarządzanie Klientami',
+      icon:  <Building2 className="w-4 h-4" />,
+      href:  '/clients',
+    },
+  ];
+
+  const isAdminSection = ['/users', '/clients', '/settings'].includes(location.pathname);
+
   return (
     <>
-      <nav className="bg-[#0a0a0f]/90 backdrop-blur-md border-b border-white/10 sticky top-0 z-50"
-        style={{ background: 'linear-gradient(135deg, #020381 0%, #0a0a2e 100%)' }}>
+      <nav
+        className="bg-[#0a0a0f]/90 backdrop-blur-md border-b border-white/10 sticky top-0 z-50"
+        style={{ background: 'linear-gradient(135deg, #020381 0%, #0a0a2e 100%)' }}
+      >
         <div className="max-w-[1400px] mx-auto px-8">
           <div className="flex items-center justify-between h-16">
-            {/* Left */}
+
+            {/* Left — logo (links to dashboard) */}
             <div className="flex items-center gap-8">
-              <div className="flex items-center gap-3">
+              <button
+                onClick={() => navigate('/dashboard')}
+                className="flex items-center opacity-90 hover:opacity-100 transition-opacity"
+              >
                 <svg xmlns="http://www.w3.org/2000/svg" width="110" height="19" viewBox="0 0 239.408 40.61" fill="white">
                   <path d="M2153.152,217.754v2.022a8.079,8.079,0,0,0-6.41-2.624c-5.635,0-10.282,4.947-10.282,11.357s4.646,11.357,10.282,11.357a8.079,8.079,0,0,0,6.41-2.624v2.022h6.453v-21.51Zm-5.119,16a5.25,5.25,0,1,1,5.119-5.248A4.912,4.912,0,0,1,2148.032,233.757Z" transform="translate(-2045.039 -207.86)"/>
                   <path d="M2779.643,217.754v2.194a7.642,7.642,0,0,0-6.281-2.8,10.933,10.933,0,0,0,0,21.854,7.642,7.642,0,0,0,6.281-2.8v1.979c0,3.054-1.85,4.6-4.861,4.6-2.839,0-4.087-1.2-4.9-2.71l-5.507,3.183c1.979,3.528,5.722,5.205,10.2,5.205,5.722,0,11.357-3.054,11.357-10.282V217.754Zm-5.206,15.315a4.995,4.995,0,1,1,5.206-4.99A4.87,4.87,0,0,1,2774.437,233.069Z" transform="translate(-2644.557 -207.86)"/>
@@ -60,30 +109,62 @@ export function Navigation({ accounts, selectedAccount, onSelectAccount, dateRan
                   <path d="M1779.062,238.025a11.876,11.876,0,0,1-6.71,1.841c-7.356,0-11.916-4.947-11.916-11.357a11.028,11.028,0,0,1,11.443-11.357,10.788,10.788,0,0,1,6.683,2.222,11.133,11.133,0,0,0-3.365,4.762,4.68,4.68,0,0,0-3.361-1.263,4.44,4.44,0,0,0-4.689,3.4h7.47a12.826,12.826,0,0,0,.067,4.818h-7.409c.817,2.237,2.8,3.011,5.162,3.011a6.144,6.144,0,0,0,2.956-.728A10.975,10.975,0,0,0,1779.062,238.025Z" transform="translate(-1685.105 -207.86)"/>
                   <circle cx="3.716" cy="3.716" r="3.716" transform="translate(0 24.589)"/>
                 </svg>
-              </div>
-              <div className="flex items-center gap-1">
-                <button
-                  onClick={() => navigate('/dashboard')}
-                  className={`text-sm font-medium px-4 py-2 rounded-lg transition-colors ${
-                    location.pathname === '/dashboard' ? 'text-white bg-white/10' : 'text-white/70 hover:text-white hover:bg-white/5'
-                  }`}
-                >
-                  Dashboard
-                </button>
-                {isAdmin && (
+              </button>
+
+              {/* Admin dropdown */}
+              {isAdmin && (
+                <div className="relative" ref={adminRef}>
                   <button
-                    onClick={() => navigate('/users')}
-                    className={`text-sm font-medium px-4 py-2 rounded-lg transition-colors ${
-                      location.pathname === '/users' ? 'text-white bg-white/10' : 'text-white/70 hover:text-white hover:bg-white/5'
+                    onClick={() => setAdminOpen(v => !v)}
+                    className={`flex items-center gap-1.5 text-sm font-medium px-4 py-2 rounded-lg transition-colors ${
+                      isAdminSection
+                        ? 'text-white bg-white/10'
+                        : 'text-white/70 hover:text-white hover:bg-white/5'
                     }`}
                   >
-                    Użytkownicy
+                    Panel Administratora
+                    <ChevronDown className={`w-3.5 h-3.5 transition-transform ${adminOpen ? 'rotate-180' : ''}`} />
                   </button>
-                )}
-              </div>
+
+                  {adminOpen && (
+                    <div className="absolute top-full left-0 mt-1 w-64 bg-white rounded-[10px] shadow-lg border border-gray-100 py-1 z-50">
+                      {adminNavItems.map(item => (
+                        <button
+                          key={item.href}
+                          onClick={() => { navigate(item.href); setAdminOpen(false); }}
+                          className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm text-left transition-colors ${
+                            location.pathname === item.href
+                              ? 'bg-purple-50 text-purple-700 font-medium'
+                              : 'text-gray-700 hover:bg-gray-50'
+                          }`}
+                        >
+                          <span className="text-gray-400">{item.icon}</span>
+                          {item.label}
+                        </button>
+                      ))}
+
+                      <div className="border-t border-gray-100 my-1" />
+
+                      <button
+                        onClick={handleConnectGoogle}
+                        disabled={oauthLoading}
+                        className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-left text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50"
+                      >
+                        <span className="text-gray-400">
+                          {oauthLoading
+                            ? <div className="w-4 h-4 border-2 border-gray-300 border-t-blue-500 rounded-full animate-spin" />
+                            : <Link2 className="w-4 h-4" />
+                          }
+                        </span>
+                        Połącz Google Ads (OAuth)
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
-            {/* Right */}
+            {/* Right controls */}
             <div className="flex items-center gap-3">
               {accounts?.length > 0 && (
                 <select
@@ -100,15 +181,17 @@ export function Navigation({ accounts, selectedAccount, onSelectAccount, dateRan
                 </select>
               )}
 
-              <button
-                onClick={() => setModalOpen(true)}
-                className="flex items-center gap-2 text-white/90 hover:text-white hover:bg-white/5 rounded-lg px-3 py-1.5 text-sm transition-colors"
-              >
-                <Calendar className="w-4 h-4" />
-                {dateRange ? `${fmtDisplay(dateRange.since)} – ${fmtDisplay(dateRange.until)}` : ''}
-              </button>
+              {dateRange && (
+                <button
+                  onClick={() => setModalOpen(true)}
+                  className="flex items-center gap-2 text-white/90 hover:text-white hover:bg-white/5 rounded-lg px-3 py-1.5 text-sm transition-colors"
+                >
+                  <Calendar className="w-4 h-4" />
+                  {`${fmtDisplay(dateRange.since)} – ${fmtDisplay(dateRange.until)}`}
+                </button>
+              )}
 
-              {isAdmin && (
+              {isAdmin && onSync && (
                 <button
                   onClick={handleSync}
                   disabled={syncing}
