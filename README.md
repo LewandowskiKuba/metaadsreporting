@@ -1,4 +1,4 @@
-# META Ads Dashboard
+# Elite Ads Dashboard
 
 Wewnętrzny dashboard agencji .eliteagency do raportowania kampanii Meta Ads i Google Ads. Umożliwia podgląd metryk reklamowych, analizę kreacji video, zarządzanie klientami i dostępem użytkowników.
 

@@ -1,4 +1,4 @@
-# Specyfikacja techniczna — META Ads Dashboard
+# Specyfikacja techniczna — Elite Ads Dashboard
 
 ## Architektura systemu
 

@@ -57,7 +57,7 @@ export function LoginPage() {
             </div>
           </div>
           <div className="text-center mb-10">
-            <h1 className="text-3xl font-semibold mb-2 text-gray-900">META Ads Dashboard</h1>
+            <h1 className="text-3xl font-semibold mb-2 text-gray-900">Elite Ads Dashboard</h1>
             <p className="text-gray-600">Zaloguj się, aby kontynuować</p>
           </div>
           <form onSubmit={handleLogin} className="space-y-6">
