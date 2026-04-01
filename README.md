@@ -1,16 +1,19 @@
 # META Ads Dashboard
 
-Wewnętrzny dashboard do raportowania kampanii Meta Ads (Facebook/Instagram) dla agencji. Umożliwia podgląd metryk reklamowych, analizę kreacji i zarządzanie dostępem klientów.
+Wewnętrzny dashboard agencji .eliteagency do raportowania kampanii Meta Ads i Google Ads. Umożliwia podgląd metryk reklamowych, analizę kreacji video, zarządzanie klientami i dostępem użytkowników.
 
 ## Funkcje
 
-- Podgląd metryk kampanii w czasie rzeczywistym (wydatki, zasięg, CPM, CPC, CTR, ROAS)
+- Przełącznik platform: **Meta Ads** / **Google Ads**
+- Metryki kampanii: wydatki, zasięg, wyświetlenia, CPC, CTR, ROAS, Koszt konwersji
 - Wykresy wydajności w czasie
-- Analiza targetowań (wiek, region)
-- Podgląd kreacji reklamowych (grafika + video)
-- Analiza video: retencja, ćwiartki, ThruPlay
+- Analiza targetowań (wiek, region) — Meta
+- Podgląd kreacji reklamowych (grafika + video) — Meta
+- Analiza video: retencja, ćwiartki (25/50/75/100%), ThruPlay, śr. czas oglądania
+- Zarządzanie klientami — przypisywanie kont reklamowych (Meta + Google Ads)
 - Zarządzanie użytkownikami i dostępem do kont
-- Automatyczna synchronizacja danych z Meta API (co 24h)
+- Google Ads OAuth — podpięcie konta przez Panel Administratora
+- Automatyczna synchronizacja danych (codziennie o 3:00 CET)
 
 ## Technologie
 
@@ -30,7 +33,8 @@ Wewnętrzny dashboard do raportowania kampanii Meta Ads (Facebook/Instagram) dla
 
 - Node.js 18+
 - npm 9+
-- Konto Meta Ads z aktywnym tokenem dostępu
+- Konto Meta Ads z aktywnym tokenem systemowym (System User)
+- Konto Google Ads MCC z Developer Token (do integracji Google Ads)
 
 ## Instalacja
 
@@ -45,11 +49,33 @@ npm install
 Utwórz plik `.env` w katalogu głównym:
 
 ```env
+# Meta Ads — token systemowy (System User)
 META_ACCESS_TOKEN=twoj_token_meta_api
+
+# Google Ads — dane aplikacji OAuth (tokeny użytkowników trafiają do DB przez OAuth)
+GOOGLE_ADS_DEVELOPER_TOKEN=twoj_developer_token
+GOOGLE_ADS_CLIENT_ID=twoj_client_id.apps.googleusercontent.com
+GOOGLE_ADS_CLIENT_SECRET=twoj_client_secret
+
+# URL aplikacji (wymagane dla OAuth callback)
+APP_URL=https://twoja-domena.pl
+FRONTEND_URL=https://twoja-domena.pl/meta
+
+# Auth
 JWT_SECRET=losowy_sekret_min_32_znaki
 ADMIN_EMAIL=admin@example.com
 ADMIN_PASSWORD=BezpieczneHaslo123!
+
+# Serwer
 PORT=3002
+```
+
+### Opcjonalne zmienne Google Ads
+
+```env
+GOOGLE_ADS_MANAGER_ID=     # ID konta MCC (login-customer-id)
+GOOGLE_ADS_CUSTOMER_IDS=   # Lista ID klientów przez przecinek (pomija auto-discovery)
+GOOGLE_ADS_REFRESH_TOKEN=  # Tylko migracja — zostanie auto-przeniesiony do DB
 ```
 
 ## Uruchomienie (development)
@@ -72,9 +98,9 @@ node server.js
 ## Deployment (Hetzner / Ubuntu)
 
 ```bash
-# Na serwerze
+# Na serwerze — projekt w /opt/meta-dashboard
 cd /opt/meta-dashboard
-git pull
+git pull origin main
 npm install
 npm run build
 pm2 restart meta-dashboard
@@ -91,15 +117,24 @@ location /meta/ {
 }
 ```
 
+## Podpięcie Google Ads (OAuth)
+
+1. Zarejestruj aplikację w Google Cloud Console (typ: Web application)
+2. Dodaj Authorized redirect URI: `{APP_URL}/api/auth/google-ads/callback`
+3. Wypełnij `GOOGLE_ADS_*` zmienne w `.env`
+4. Zaloguj się jako admin → **Panel Administratora → Połącz Google Ads (OAuth)**
+
 ## Role użytkowników
 
 | Rola | Uprawnienia |
 |---|---|
-| `admin` | Dostęp do wszystkich kont, zarządzanie użytkownikami, ręczna synchronizacja |
+| `admin` | Dostęp do wszystkich kont, zarządzanie użytkownikami i klientami, sync, OAuth |
 | `viewer` | Dostęp tylko do przypisanych kont, podgląd danych |
 
 ## Synchronizacja danych
 
-- **Automatyczna:** codziennie o 3:00 CET — sync danych z poprzedniego dnia
-- **Ręczna:** przycisk sync w navbarze (tylko admin)
-- **Backfill:** przy pierwszym uruchomieniu pobiera ostatnie 90 dni historii
+| Tryb | Kiedy | Co robi |
+|---|---|---|
+| Automatyczna | Codziennie 3:00 CET | Pobiera dane z poprzedniego dnia (Meta + Google Ads) |
+| Ręczna | Przycisk sync w navbarze (admin) | Pełny sync wszystkich kont |
+| Backfill | Pierwsze uruchomienie | Pobiera ostatnie 90 dni historii |
